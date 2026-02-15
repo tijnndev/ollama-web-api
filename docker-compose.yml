@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ollama-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-ollama}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ollama123}
+      POSTGRES_DB: ${DB_NAME:-ollama_api}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ollama-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ollama}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ollama-backend
+    environment:
+      - ADMIN_USER=${ADMIN_USER}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-ollama}
+      - DB_PASSWORD=${DB_PASSWORD:-ollama123}
+      - DB_NAME=${DB_NAME:-ollama_api}
+      - PORT=${PORT:-3000}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ollama-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ollama-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - ollama-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  ollama-network:
+    driver: bridge
