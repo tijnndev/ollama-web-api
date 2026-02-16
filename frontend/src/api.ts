@@ -109,6 +109,21 @@ export const listOllamaModels = async () => {
   return response.data;
 };
 
+export const listRunningOllamaModels = async () => {
+  const response = await api.get('/ollama/models/running');
+  return response.data;
+};
+
+export const pullOllamaModel = async (modelName: string) => {
+  const response = await api.post('/ollama/models/pull', { name: modelName });
+  return response.data;
+};
+
+export const deleteOllamaModel = async (modelName: string) => {
+  const response = await api.delete('/ollama/models/delete', { data: { name: modelName } });
+  return response.data;
+};
+
 export const generateText = async (apiKey: string, request: OllamaRequest): Promise<OllamaResponse> => {
   const response = await axios.post(`${API_BASE_URL}/ollama/generate`, request, {
     headers: {

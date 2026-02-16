@@ -18,6 +18,17 @@ services:
       timeout: 5s
       retries: 5
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-server
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - ollama-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -32,15 +43,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-ollama123}
       - DB_NAME=${DB_NAME:-ollama_api}
       - PORT=${PORT:-3000}
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
+      - ollama
     networks:
       - ollama-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   frontend:
@@ -58,6 +67,7 @@ services:
 
 volumes:
   postgres_data:
+  ollama_data:
 
 networks:
   ollama-network:

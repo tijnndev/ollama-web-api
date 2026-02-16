@@ -192,3 +192,219 @@ func ListOllamaModels(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/json")
 	return c.Send(body)
 }
+
+// PullOllamaModel godoc
+// @Summary Pull an Ollama model
+// @Description Download and install a model from the Ollama library
+// @Tags ollama
+// @Accept json
+// @Produce json
+// @Param request body map[string]string true "Model pull request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 502 {object} models.ErrorResponse
+// @Router /api/ollama/models/pull [post]
+func PullOllamaModel(c *fiber.Ctx) error {
+	ollamaURL := os.Getenv("OLLAMA_BASE_URL")
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+
+	var req map[string]string
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+			Error:   "Invalid request",
+			Message: err.Error(),
+		})
+	}
+
+	modelName, exists := req["name"]
+	if !exists || modelName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Model name is required",
+		})
+	}
+
+	requestBody := map[string]string{"name": modelName}
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error:   "Failed to marshal request",
+			Message: err.Error(),
+		})
+	}
+
+	client := &http.Client{
+		Timeout: 300 * time.Second, // Long timeout for model downloads
+	}
+
+	log.Printf("Pulling Ollama model: %s from %s", modelName, fmt.Sprintf("%s/api/pull", ollamaURL))
+
+	resp, err := client.Post(
+		fmt.Sprintf("%s/api/pull", ollamaURL),
+		"application/json",
+		bytes.NewBuffer(jsonBody),
+	)
+	if err != nil {
+		log.Printf("Connection error pulling model: %v", err)
+		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{
+			Error:   "Failed to connect to Ollama",
+			Message: err.Error(),
+		})
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error:   "Failed to read response",
+			Message: err.Error(),
+		})
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return c.Status(resp.StatusCode).JSON(models.ErrorResponse{
+			Error:   "Ollama API error",
+			Message: string(body),
+		})
+	}
+
+	c.Set("Content-Type", "application/json")
+	return c.Send(body)
+}
+
+// DeleteOllamaModel godoc
+// @Summary Delete an Ollama model
+// @Description Remove a model from the local Ollama instance
+// @Tags ollama
+// @Accept json
+// @Produce json
+// @Param request body map[string]string true "Model delete request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 502 {object} models.ErrorResponse
+// @Router /api/ollama/models/delete [delete]
+func DeleteOllamaModel(c *fiber.Ctx) error {
+	ollamaURL := os.Getenv("OLLAMA_BASE_URL")
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+
+	var req map[string]string
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+			Error:   "Invalid request",
+			Message: err.Error(),
+		})
+	}
+
+	modelName, exists := req["name"]
+	if !exists || modelName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+			Error:   "Invalid request",
+			Message: "Model name is required",
+		})
+	}
+
+	requestBody := map[string]string{"name": modelName}
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error:   "Failed to marshal request",
+			Message: err.Error(),
+		})
+	}
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	log.Printf("Deleting Ollama model: %s from %s", modelName, fmt.Sprintf("%s/api/delete", ollamaURL))
+
+	reqHttp, err := http.NewRequest("DELETE", fmt.Sprintf("%s/api/delete", ollamaURL), bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error:   "Failed to create request",
+			Message: err.Error(),
+		})
+	}
+	reqHttp.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(reqHttp)
+	if err != nil {
+		log.Printf("Connection error deleting model: %v", err)
+		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{
+			Error:   "Failed to connect to Ollama",
+			Message: err.Error(),
+		})
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error:   "Failed to read response",
+			Message: err.Error(),
+		})
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return c.Status(resp.StatusCode).JSON(models.ErrorResponse{
+			Error:   "Ollama API error",
+			Message: string(body),
+		})
+	}
+
+	c.Set("Content-Type", "application/json")
+	return c.Send(body)
+}
+
+// ListRunningOllamaModels godoc
+// @Summary List running Ollama models
+// @Description Get a list of currently loaded/running models
+// @Tags ollama
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 502 {object} models.ErrorResponse
+// @Router /api/ollama/models/running [get]
+func ListRunningOllamaModels(c *fiber.Ctx) error {
+	ollamaURL := os.Getenv("OLLAMA_BASE_URL")
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	log.Printf("Getting running models from: %s", fmt.Sprintf("%s/api/ps", ollamaURL))
+
+	resp, err := client.Get(fmt.Sprintf("%s/api/ps", ollamaURL))
+	if err != nil {
+		log.Printf("Connection error getting running models: %v", err)
+		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{
+			Error:   "Failed to connect to Ollama",
+			Message: err.Error(),
+		})
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error:   "Failed to read response",
+			Message: err.Error(),
+		})
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return c.Status(resp.StatusCode).JSON(models.ErrorResponse{
+			Error:   "Ollama API error",
+			Message: string(body),
+		})
+	}
+
+	c.Set("Content-Type", "application/json")
+	return c.Send(body)
+}

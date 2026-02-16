@@ -105,6 +105,9 @@ func main() {
 	// Ollama routes
 	ollama := api.Group("/ollama")
 	ollama.Get("/models", middleware.AuthRequired(), handlers.ListOllamaModels)
+	ollama.Get("/models/running", middleware.AuthRequired(), handlers.ListRunningOllamaModels)
+	ollama.Post("/models/pull", middleware.AuthRequired(), handlers.PullOllamaModel)
+	ollama.Delete("/models/delete", middleware.AuthRequired(), handlers.DeleteOllamaModel)
 	ollama.Post("/generate", middleware.ValidateAPIKey(), handlers.OllamaGenerate)
 
 	// Start server
