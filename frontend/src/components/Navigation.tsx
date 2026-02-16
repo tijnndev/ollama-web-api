@@ -35,6 +35,12 @@ const ModelsIcon = () => (
   </svg>
 );
 
+const ChatIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+  </svg>
+);
+
 const LogoutIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -79,6 +85,16 @@ const Navigation: React.FC<NavigationProps> = ({ onLogout, isOpen = false, onTog
             <TestIcon />
           </span>
           <span className="sidebar-text">Test API</span>
+        </Link>
+
+        <Link
+          to="/chat"
+          className={`sidebar-link ${location.pathname === '/chat' ? 'active' : ''}`}
+        >
+          <span className="sidebar-icon">
+            <ChatIcon />
+          </span>
+          <span className="sidebar-text">Chat</span>
         </Link>
 
         <Link

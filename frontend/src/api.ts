@@ -133,4 +133,97 @@ export const generateText = async (apiKey: string, request: OllamaRequest): Prom
   return response.data;
 };
 
+// Streamed generate endpoint with attachments support.
+// onChunk will be called for each decoded text chunk received from the server.
+export const streamGenerate = async (
+  apiKey: string,
+  model: string,
+  prompt: string,
+  files?: File[],
+  onChunk?: (chunk: string) => void
+): Promise<void> => {
+  const url = `${API_BASE_URL}/ollama/generate`;
+
+  const form = new FormData();
+  form.append('model', model);
+  form.append('prompt', prompt);
+  form.append('stream', 'true');
+  if (files && files.length > 0) {
+    for (const f of files) {
+      form.append('attachments', f);
+    }
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'X-API-Key': apiKey,
+    } as any,
+    body: form,
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Server error: ${res.status} ${txt}`);
+  }
+
+  if (!res.body) return;
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let done = false;
+  
+  while (!done) {
+    const { value, done: d } = await reader.read();
+    done = d;
+    
+    if (value) {
+      buffer += decoder.decode(value, { stream: true });
+      
+      // Process complete JSON lines
+      const lines = buffer.split('\n');
+      // Keep the last incomplete line in the buffer
+      buffer = lines.pop() || '';
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        
+        try {
+          const json = JSON.parse(trimmed);
+          // Extract only the "response" field from each JSON object
+          if (json.response && onChunk) {
+            onChunk(json.response);
+          }
+        } catch (e) {
+          // Skip malformed JSON
+          console.warn('Failed to parse JSON line:', trimmed);
+        }
+      }
+    }
+  }
+  
+  // Process any remaining buffer
+  if (buffer.trim()) {
+    try {
+      const json = JSON.parse(buffer.trim());
+      if (json.response && onChunk) {
+        onChunk(json.response);
+      }
+    } catch (e) {
+      // Ignore final parse errors
+    }
+  }
+};
+
+export const validateApiKey = async (apiKey: string) => {
+  const response = await axios.get(`${API_BASE_URL}/validate_key`, {
+    headers: {
+      'X-API-Key': apiKey,
+    },
+  });
+  return response.data;
+};
+
 export default api;

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/ollama-web-api/internal/database"
 	"github.com/ollama-web-api/internal/middleware"
 	"github.com/ollama-web-api/internal/models"
 )
@@ -47,5 +48,47 @@ func Login(c *fiber.Ctx) error {
 
 	return c.JSON(models.LoginResponse{
 		Token: token,
+	})
+}
+
+// ValidateProjectKey godoc
+// @Summary Validate project API key
+// @Description Check whether the provided X-API-Key belongs to an active project
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param X-API-Key header string true "Project API Key"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 403 {object} models.ErrorResponse
+// @Router /api/validate_key [get]
+func ValidateProjectKey(c *fiber.Ctx) error {
+	apiKey, ok := c.Locals("api_key").(string)
+	if !ok || apiKey == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(models.ErrorResponse{
+			Error:   "Invalid API key",
+			Message: "API key not provided",
+		})
+	}
+
+	var project models.Project
+	result := database.DB.Where("api_key = ?", apiKey).First(&project)
+	if result.Error != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(models.ErrorResponse{
+			Error:   "Invalid API key",
+			Message: "Project not found with the provided API key",
+		})
+	}
+
+	if !project.IsActive {
+		return c.Status(fiber.StatusForbidden).JSON(models.ErrorResponse{
+			Error:   "Project inactive",
+			Message: "This project is currently inactive",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"valid":   true,
+		"project": fiber.Map{"id": project.ID, "name": project.Name},
 	})
 }

@@ -88,6 +88,9 @@ func main() {
 	auth := api.Group("/auth")
 	auth.Post("/login", handlers.Login)
 
+	// Validate API key (project key) - used by frontend to check validity
+	api.Get("/validate_key", middleware.ValidateAPIKey(), handlers.ValidateProjectKey)
+
 	// Project routes (admin authentication required)
 	projects := api.Group("/projects", middleware.AuthRequired())
 	projects.Get("/", handlers.ListProjects)

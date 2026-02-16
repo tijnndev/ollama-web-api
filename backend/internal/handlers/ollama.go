@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -56,13 +59,55 @@ func OllamaGenerate(c *fiber.Ctx) error {
 		})
 	}
 
-	// Parse request
+	// Parse request - support both JSON and multipart/form-data (for attachments)
 	var req models.OllamaRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
-			Error:   "Invalid request",
-			Message: err.Error(),
-		})
+	contentType := c.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/form-data") {
+		// parse multipart form
+		form, err := c.MultipartForm()
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+				Error:   "Invalid multipart request",
+				Message: err.Error(),
+			})
+		}
+
+		// required fields
+		if vals, ok := form.Value["model"]; ok && len(vals) > 0 {
+			req.Model = vals[0]
+		}
+		if vals, ok := form.Value["prompt"]; ok && len(vals) > 0 {
+			req.Prompt = vals[0]
+		}
+		if vals, ok := form.Value["stream"]; ok && len(vals) > 0 {
+			b, _ := strconv.ParseBool(vals[0])
+			req.Stream = b
+		}
+
+		// handle attachments (read and base64-encode)
+		if files, ok := form.File["attachments"]; ok {
+			for _, fh := range files {
+				f, err := fh.Open()
+				if err != nil {
+					continue
+				}
+				data, err := io.ReadAll(f)
+				f.Close()
+				if err != nil {
+					continue
+				}
+				encoded := base64.StdEncoding.EncodeToString(data)
+				req.Images = append(req.Images, encoded)
+			}
+		}
+	} else {
+		// JSON body
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+				Error:   "Invalid request",
+				Message: err.Error(),
+			})
+		}
 	}
 
 	// Validate that the requested model is assigned to this project
@@ -103,11 +148,17 @@ func OllamaGenerate(c *fiber.Ctx) error {
 
 	log.Printf("Attempting to connect to Ollama at: %s", fmt.Sprintf("%s/api/generate", ollamaURL))
 
-	resp, err := client.Post(
-		fmt.Sprintf("%s/api/generate", ollamaURL),
-		"application/json",
-		bytes.NewBuffer(requestBody),
-	)
+	// Use a raw request so we can stream the response back to the client if requested
+	reqHttp, err := http.NewRequest("POST", fmt.Sprintf("%s/api/generate", ollamaURL), bytes.NewBuffer(requestBody))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error:   "Failed to create request",
+			Message: err.Error(),
+		})
+	}
+	reqHttp.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(reqHttp)
 	if err != nil {
 		log.Printf("Connection error to Ollama: %v", err)
 		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{
@@ -115,9 +166,22 @@ func OllamaGenerate(c *fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
-	defer resp.Body.Close()
 
-	// Read response
+	// If streaming requested, proxy response body as a stream back to the client
+	if req.Stream {
+		// Pass through content-type from Ollama (e.g., text/event-stream or application/octet-stream)
+		ct := resp.Header.Get("Content-Type")
+		if ct == "" {
+			ct = "text/event-stream"
+		}
+		c.Set("Content-Type", ct)
+
+		// Do not close resp.Body here; SendStream will read from it
+		return c.SendStream(resp.Body)
+	}
+
+	// Non-streaming: read full body and return JSON or raw response
+	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{

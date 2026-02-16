@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import Projects from './components/Projects';
 import TestAPI from './components/TestAPI';
 import Models from './components/Models';
+import Chat from './components/Chat';
 import Navigation from './components/Navigation';
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/models" element={<Models />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/test" element={<TestAPI />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
