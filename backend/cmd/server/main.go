@@ -28,7 +28,7 @@ import (
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 
-// @host localhost:3000
+// @host ollama.tijnn.dev
 // @BasePath /api
 // @schemes http https
 

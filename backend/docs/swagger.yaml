@@ -1,4 +1,4 @@
-basePath: /
+basePath: /api
 definitions:
   models.AssignModelRequest:
     properties:
@@ -112,7 +112,7 @@ definitions:
         example: Operation successful
         type: string
     type: object
-host: localhost:8080
+host: ollama.tijnn.dev
 info:
   contact:
     email: support@example.com
@@ -209,6 +209,90 @@ paths:
       security:
       - BearerAuth: []
       summary: List available Ollama models
+      tags:
+      - ollama
+  /api/ollama/models/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a model from the local Ollama instance
+      parameters:
+      - description: Model delete request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Delete an Ollama model
+      tags:
+      - ollama
+  /api/ollama/models/pull:
+    post:
+      consumes:
+      - application/json
+      description: Download and install a model from the Ollama library
+      parameters:
+      - description: Model pull request
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: Pull an Ollama model
+      tags:
+      - ollama
+  /api/ollama/models/running:
+    get:
+      description: Get a list of currently loaded/running models
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: List running Ollama models
       tags:
       - ollama
   /api/projects:
