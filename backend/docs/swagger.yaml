@@ -41,16 +41,9 @@ definitions:
     type: object
   models.OllamaRequest:
     properties:
-      context:
-        items:
-          type: integer
-        type: array
       model:
         example: llama2
         type: string
-      options:
-        additionalProperties: true
-        type: object
       prompt:
         example: Why is the sky blue?
         type: string

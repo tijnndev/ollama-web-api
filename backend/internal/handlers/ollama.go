@@ -95,6 +95,8 @@ func OllamaGenerate(c *fiber.Ctx) error {
 		})
 	}
 
+	log.Printf("Sending request to Ollama: %s", string(requestBody))
+
 	client := &http.Client{
 		Timeout: 300 * time.Second, // 5 minutes timeout for long-running requests
 	}
@@ -123,6 +125,8 @@ func OllamaGenerate(c *fiber.Ctx) error {
 			Message: err.Error(),
 		})
 	}
+
+	log.Printf("Received response from Ollama: %s", string(body))
 
 	// If Ollama returned an error
 	if resp.StatusCode != http.StatusOK {

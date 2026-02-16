@@ -728,19 +728,9 @@ const docTemplate = `{
         "models.OllamaRequest": {
             "type": "object",
             "properties": {
-                "context": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
                 "model": {
                     "type": "string",
                     "example": "llama2"
-                },
-                "options": {
-                    "type": "object",
-                    "additionalProperties": true
                 },
                 "prompt": {
                     "type": "string",
