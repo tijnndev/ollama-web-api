@@ -118,7 +118,7 @@ const Models: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container">
+      <div className="page-container">
         <h1>Models</h1>
         <div className="loading">Loading models...</div>
       </div>
@@ -126,17 +126,19 @@ const Models: React.FC = () => {
   }
 
   return (
-    <div className="container">
-      <h1>Models</h1>
+    <div className="page-container">
+      <div className="page-header">
+        <h1>Models</h1>
+      </div>
 
       {error && (
-        <div className="error-message" style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#fee', border: '1px solid #fcc', borderRadius: '4px', color: '#c33' }}>
+        <div className="error-message">
           {error}
         </div>
       )}
 
       {/* Pull New Model */}
-      <div className="card" style={{ marginBottom: '30px' }}>
+      <div className="card">
         <h2>Pull New Model</h2>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <input
@@ -144,12 +146,13 @@ const Models: React.FC = () => {
             value={newModelName}
             onChange={(e) => setNewModelName(e.target.value)}
             placeholder="e.g., llama2:7b, codellama:13b"
-            style={{ flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+            className="input"
+            style={{ flex: 1 }}
           />
           <button
             onClick={() => handlePullModel(newModelName)}
             disabled={pullingModel === newModelName || !newModelName.trim()}
-            className="primary-button"
+            className="button button-primary"
           >
             {pullingModel === newModelName ? 'Pulling...' : 'Pull Model'}
           </button>
@@ -161,10 +164,10 @@ const Models: React.FC = () => {
 
       {/* Running Models */}
       {runningModels.length > 0 && (
-        <div className="card" style={{ marginBottom: '30px' }}>
+        <div className="card">
           <h2>Running Models ({runningModels.length})</h2>
-          <div className="table-container">
-            <table className="data-table">
+          <div className="table-responsive">
+            <table className="table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -175,11 +178,17 @@ const Models: React.FC = () => {
               </thead>
               <tbody>
                 {runningModels.map((model) => (
-                  <tr key={model.digest}>
+                  <tr key={model.digest} className="model-row model-row-running">
                     <td>{model.name}</td>
-                    <td>{formatSize(model.size)}</td>
-                    <td>{formatSize(model.size_vram)}</td>
-                    <td>{model.details?.family || 'Unknown'}</td>
+                    <td><span className="model-size">{formatSize(model.size)}</span></td>
+                    <td><span className="model-size">{formatSize(model.size_vram)}</span></td>
+                    <td>
+                      {model.details?.families?.length
+                        ? model.details.families.map(fam => (
+                            <span className="model-family-badge" key={fam}>{fam}</span>
+                          ))
+                        : <span className="model-family-badge">{model.details?.family || 'Unknown'}</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -194,8 +203,8 @@ const Models: React.FC = () => {
         {models.length === 0 ? (
           <p>No models installed. Pull a model above to get started.</p>
         ) : (
-          <div className="table-container">
-            <table className="data-table">
+          <div className="table-responsive">
+            <table className="table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -207,10 +216,16 @@ const Models: React.FC = () => {
               </thead>
               <tbody>
                 {models.map((model) => (
-                  <tr key={model.digest}>
+                  <tr key={model.digest} className="model-row">
                     <td>{model.name}</td>
-                    <td>{formatSize(model.size)}</td>
-                    <td>{model.details?.family || 'Unknown'}</td>
+                    <td><span className="model-size">{formatSize(model.size)}</span></td>
+                    <td>
+                      {model.details?.families?.length
+                        ? model.details.families.map(fam => (
+                            <span className="model-family-badge" key={fam}>{fam}</span>
+                          ))
+                        : <span className="model-family-badge">{model.details?.family || 'Unknown'}</span>}
+                    </td>
                     <td>{new Date(model.modified_at).toLocaleDateString()}</td>
                     <td>
                       {confirmDelete === model.name ? (
@@ -218,14 +233,15 @@ const Models: React.FC = () => {
                           <span style={{ fontSize: '12px', color: '#c33' }}>Confirm delete?</span>
                           <button
                             onClick={() => handleDeleteModel(model.name)}
-                            className="error-button"
-                            style={{ fontSize: '12px', padding: '4px 8px' }}
+                            className="model-action-btn"
+                            style={{ background: '#ff6b7d', color: '#fff' }}
                           >
                             Yes
                           </button>
                           <button
                             onClick={() => setConfirmDelete('')}
-                            style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: '#666', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}
+                            className="model-action-btn"
+                            style={{ background: '#666', color: 'white' }}
                           >
                             No
                           </button>
@@ -234,8 +250,8 @@ const Models: React.FC = () => {
                         <button
                           onClick={() => handleDeleteModel(model.name)}
                           disabled={deletingModel === model.name}
-                          className="error-button"
-                          style={{ fontSize: '12px', padding: '4px 8px' }}
+                          className="model-action-btn"
+                          style={deletingModel === model.name ? { background: '#ff6b7d', color: '#fff' } : {}}
                         >
                           {deletingModel === model.name ? 'Deleting...' : 'Delete'}
                         </button>

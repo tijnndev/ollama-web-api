@@ -136,9 +136,9 @@ const Projects: React.FC = () => {
   if (loading) return <div className="loading">Loading...</div>;
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ color: 'white', margin: 0 }}>Projects</h1>
+    <div className="page-container">
+      <div className="page-header">
+        <h1>Projects</h1>
         <button className="button button-success" onClick={() => setShowCreateModal(true)}>
           + New Project
         </button>
@@ -147,54 +147,56 @@ const Projects: React.FC = () => {
       {error && <div className="error-message">{error}</div>}
 
       <div className="card">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Models</th>
-              <th>API Key</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projects.map((project) => (
-              <tr key={project.id}>
-                <td>{project.name}</td>
-                <td>{project.description}</td>
-                <td>
-                  <span className={`badge ${project.is_active ? 'badge-success' : 'badge-danger'}`}>
-                    {project.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td>{project.models?.length || 0}</td>
-                <td>
-                  <code style={{ fontSize: '12px' }}>{project.api_key.substring(0, 20)}...</code>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="button button-secondary" onClick={() => openEditModal(project)}>
-                      Edit
-                    </button>
-                    <button className="button button-secondary" onClick={() => openModelsModal(project)}>
-                      Models
-                    </button>
-                    <button 
-                      className={`button ${project.is_active ? 'button-danger' : 'button-success'}`}
-                      onClick={() => handleToggleStatus(project)}
-                    >
-                      {project.is_active ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button className="button button-danger" onClick={() => handleDelete(project)}>
-                      Delete
-                    </button>
-                  </div>
-                </td>
+        <div className="table-responsive projects-table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Models</th>
+                <th>API Key</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {projects.map((project) => (
+                <tr key={project.id}>
+                  <td>{project.name}</td>
+                  <td>{project.description}</td>
+                  <td>
+                    <span className={`badge ${project.is_active ? 'badge-success' : 'badge-danger'}`}>
+                      {project.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td>{project.models?.length || 0}</td>
+                  <td>
+                    <code style={{ fontSize: '12px' }}>{project.api_key.substring(0, 20)}...</code>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="button button-secondary" onClick={() => openEditModal(project)}>
+                        Edit
+                      </button>
+                      <button className="button button-secondary" onClick={() => openModelsModal(project)}>
+                        Models
+                      </button>
+                      <button 
+                        className={`button ${project.is_active ? 'button-danger' : 'button-success'}`}
+                        onClick={() => handleToggleStatus(project)}
+                      >
+                        {project.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button className="button button-danger" onClick={() => handleDelete(project)}>
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Create Modal */}

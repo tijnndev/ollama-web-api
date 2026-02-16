@@ -78,16 +78,6 @@ const Navigation: React.FC<NavigationProps> = ({ onLogout, isOpen = false, onTog
         </Link>
 
         <Link
-          to="/test"
-          className={`sidebar-link ${location.pathname === '/test' ? 'active' : ''}`}
-        >
-          <span className="sidebar-icon">
-            <TestIcon />
-          </span>
-          <span className="sidebar-text">Test API</span>
-        </Link>
-
-        <Link
           to="/chat"
           className={`sidebar-link ${location.pathname === '/chat' ? 'active' : ''}`}
         >

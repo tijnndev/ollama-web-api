@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/ollama-web-api/internal/database"
 	"github.com/ollama-web-api/internal/models"
+	"bufio"
 )
 
 // OllamaGenerate godoc
@@ -309,11 +310,8 @@ func PullOllamaModel(c *fiber.Ctx) error {
 
 	log.Printf("Pulling Ollama model: %s from %s", modelName, fmt.Sprintf("%s/api/pull", ollamaURL))
 
-	resp, err := client.Post(
-		fmt.Sprintf("%s/api/pull", ollamaURL),
-		"application/json",
-		bytes.NewBuffer(jsonBody),
-	)
+	reqURL := fmt.Sprintf("%s/api/pull", ollamaURL)
+	resp, err := client.Post(reqURL, "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
 		log.Printf("Connection error pulling model: %v", err)
 		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{
@@ -323,23 +321,18 @@ func PullOllamaModel(c *fiber.Ctx) error {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
-			Error:   "Failed to read response",
-			Message: err.Error(),
-		})
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return c.Status(resp.StatusCode).JSON(models.ErrorResponse{
-			Error:   "Ollama API error",
-			Message: string(body),
-		})
-	}
-
-	c.Set("Content-Type", "application/json")
-	return c.Send(body)
+	// Stream progress as newline-delimited JSON
+	c.Set("Content-Type", "text/event-stream")
+	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Bytes()
+			w.Write(line)
+			w.Write([]byte("\n"))
+			w.Flush()
+		}
+	})
+	return nil
 }
 
 // DeleteOllamaModel godoc
