@@ -19,7 +19,7 @@
         "version": "1.0"
     },
     "host": "ollama.tijnn.dev",
-    "basePath": "/api",
+    "basePath": "/",
     "paths": {
         "/api/auth/login": {
             "post": {

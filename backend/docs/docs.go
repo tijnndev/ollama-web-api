@@ -849,7 +849,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "ollama.tijnn.dev",
-	BasePath:         "/api",
+	BasePath:         "/",
 	Schemes:          []string{"http", "https"},
 	Title:            "Ollama Web API",
 	Description:      "API for managing Ollama LLM requests with project-based access control",

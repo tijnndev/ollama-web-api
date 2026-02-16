@@ -29,7 +29,7 @@ import (
 // @license.url https://opensource.org/licenses/MIT
 
 // @host ollama.tijnn.dev
-// @BasePath /api
+// @BasePath /
 // @schemes http https
 
 // @securityDefinitions.apikey BearerAuth
