@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -98,12 +99,15 @@ func OllamaGenerate(c *fiber.Ctx) error {
 		Timeout: 300 * time.Second, // 5 minutes timeout for long-running requests
 	}
 
+	log.Printf("Attempting to connect to Ollama at: %s", fmt.Sprintf("%s/api/generate", ollamaURL))
+
 	resp, err := client.Post(
 		fmt.Sprintf("%s/api/generate", ollamaURL),
 		"application/json",
 		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
+		log.Printf("Connection error to Ollama: %v", err)
 		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{
 			Error:   "Failed to connect to Ollama",
 			Message: err.Error(),
@@ -158,8 +162,11 @@ func ListOllamaModels(c *fiber.Ctx) error {
 		Timeout: 30 * time.Second,
 	}
 
+	log.Printf("Attempting to connect to Ollama at: %s", fmt.Sprintf("%s/api/tags", ollamaURL))
+
 	resp, err := client.Get(fmt.Sprintf("%s/api/tags", ollamaURL))
 	if err != nil {
+		log.Printf("Connection error to Ollama: %v", err)
 		return c.Status(fiber.StatusBadGateway).JSON(models.ErrorResponse{
 			Error:   "Failed to connect to Ollama",
 			Message: err.Error(),
