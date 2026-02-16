@@ -739,12 +739,6 @@ const docTemplate = `{
                 "stream": {
                     "type": "boolean",
                     "example": false
-                },
-                "system": {
-                    "type": "string"
-                },
-                "template": {
-                    "type": "string"
                 }
             }
         },

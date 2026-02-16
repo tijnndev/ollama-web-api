@@ -29,11 +29,9 @@ type ProjectModel struct {
 
 // OllamaRequest represents a request to the Ollama API
 type OllamaRequest struct {
-	Model    string `json:"model" example:"llama2"`
-	Prompt   string `json:"prompt" example:"Why is the sky blue?"`
-	Stream   bool   `json:"stream" example:"false"`
-	System   string `json:"system,omitempty"`
-	Template string `json:"template,omitempty"`
+	Model  string `json:"model" example:"llama2"`
+	Prompt string `json:"prompt" example:"Why is the sky blue?"`
+	Stream bool   `json:"stream" example:"false"`
 }
 
 // OllamaResponse represents a response from the Ollama API

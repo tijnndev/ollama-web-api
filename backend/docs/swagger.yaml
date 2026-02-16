@@ -50,10 +50,6 @@ definitions:
       stream:
         example: false
         type: boolean
-      system:
-        type: string
-      template:
-        type: string
     type: object
   models.OllamaResponse:
     properties:
