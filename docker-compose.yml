@@ -56,6 +56,8 @@ services:
       - PORT=${PORT:-3000}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
       - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "3001:3000"
     depends_on:
       - postgres
       - ollama

@@ -1,0 +1,17 @@
+tunnel: ollama-tunnel
+credentials-file: /home/tijn/.cloudflared/ollama-tunnel.json
+
+ingress:
+  - hostname: ollama.tijnn.dev
+    path: /api/*
+    service: http://localhost:3001
+    originRequest:
+      noTLSVerify: true
+
+  - hostname: ollama.tijnn.dev
+    path: /*
+    service: http://localhost:3000
+    originRequest:
+      noTLSVerify: true
+
+  - service: http_status:404
