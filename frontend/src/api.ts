@@ -15,6 +15,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// On 401 responses, clear the stored token and notify the app
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export interface Project {
   id: number;
   name: string;

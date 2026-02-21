@@ -16,6 +16,16 @@ function App() {
     setIsAuthenticated(!!token);
   }, []);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setIsAuthenticated(false);
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, []);
+
   const handleLogin = () => {
     setIsAuthenticated(true);
   };
