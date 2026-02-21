@@ -19,7 +19,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error?.response.status === 502) {
       localStorage.removeItem('token');
       window.dispatchEvent(new Event('auth:unauthorized'));
     }
