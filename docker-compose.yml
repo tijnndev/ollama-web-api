@@ -38,7 +38,6 @@ services:
       - ollama_data:/root/.ollama
     networks:
       - ollama-network
-    restart: unless-stopped
 
   backend:
     build:
@@ -75,7 +74,6 @@ services:
       - backend
     networks:
       - ollama-network
-    restart: unless-stopped
 
 volumes:
   postgres_data:
